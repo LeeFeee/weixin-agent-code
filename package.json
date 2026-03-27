@@ -9,6 +9,9 @@
       "import": "./dist/index.js"
     }
   },
+  "bin": {
+    "weixin-agent-code": "./cli.mjs"
+  },
   "files": ["dist"],
   "scripts": {
     "build": "tsc",
