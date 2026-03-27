@@ -15,19 +15,19 @@
 支持两种后端模式：
 
 - **openclaw 模式**：通过 OpenClaw 运行时的完整 Agent 路由管道，享受 OpenClaw 的会话管理、工具调用等全部能力。
-- **lightweight 模式**：通过 AgentAPI（Go 二进制）HTTP 代理 + ACP 协议直连各 CLI Agent，轻量快速，适合单 Agent 对话场景。
+- **lightweight 模式**：通过 ACP（Agent Communication Protocol）直接以子进程 stdio 方式连接各 CLI Agent，轻量稳定，适合单 Agent 对话场景。
 
 ## 支持的后端
 
-| 后端 | 模式 | 说明 | AgentAPI 端口 |
-|------|------|------|---------------|
+| 后端 | 模式 | 说明 | ACP 命令 |
+|------|------|------|----------|
 | OpenClaw | openclaw | OpenClaw 内置 Agent，完整管道 | — |
-| Claude Code | lightweight | Anthropic Claude Code CLI | 3285 |
-| Codex | lightweight | OpenAI Codex CLI | 3284 |
-| OpenCode | lightweight | OpenCode CLI | 3286 |
-| GitHub Copilot | lightweight | GitHub Copilot CLI | 3287 |
-| Auggie | lightweight | Auggie CLI | 3288 |
-| Cursor | lightweight | Cursor Agent CLI | 3289 |
+| Claude Code | lightweight | Anthropic Claude Code CLI | `claude-agent-acp` |
+| Codex | lightweight | OpenAI Codex CLI | `codex-acp` |
+| OpenCode | lightweight | OpenCode CLI | `opencode acp` |
+| GitHub Copilot | lightweight | GitHub Copilot CLI | `copilot --acp --stdio` |
+| Auggie | lightweight | Auggie CLI | `auggie --acp` |
+| Cursor | lightweight | Cursor Agent CLI | `cursor-agent acp` |
 
 ## 前置要求
 
@@ -36,7 +36,6 @@
 
 安装后会自动处理：
 - [@tencent-weixin/openclaw-weixin](https://www.npmjs.com/package/@tencent-weixin/openclaw-weixin) >= 2.0.0（作为 peerDependency）
-- [AgentAPI](https://github.com/coder/agentapi)（lightweight 模式所需的 Go 二进制，首次使用时自动下载）
 
 ## 安装
 
@@ -51,8 +50,7 @@ npx -y @leefeee/weixin-agent-code install
 3. 禁用官方 openclaw-weixin 插件（避免通道冲突）
 4. 启用本插件
 5. 引导微信扫码登录
-6. 下载 AgentAPI 二进制（lightweight 模式需要）
-7. 重启 Gateway
+6. 重启 Gateway
 
 安装完成后，打开微信即可开始对话。
 
@@ -90,15 +88,15 @@ npx -y @leefeee/weixin-agent-code install
 
 ### 使用 Lightweight 后端
 
-Lightweight 模式（claude/codex 等）需要本地安装对应的 CLI 工具：
+Lightweight 模式（claude/codex 等）需要本地安装对应的 CLI 工具，并确保其支持 ACP 协议：
 
 ```bash
 # 例如使用 Claude Code
-npm install -g @anthropic-ai/claude-code
-claude   # 先登录
+npm install -g @zed-industries/claude-agent-acp
+claude-agent-acp   # 先完成登录和信任配置
 ```
 
-AgentAPI 会在首次请求对应后端时自动启动，默认监听 `localhost:328x`。
+各后端对应的 ACP CLI 工具需安装到系统 PATH 中，插件会在首次使用时自动拉起子进程。
 
 ## 配置
 
@@ -106,13 +104,14 @@ AgentAPI 会在首次请求对应后端时自动启动，默认监听 `localhost
 
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
-| `WEIXIN_CLAUDE_AGENTAPI_URL` | Claude AgentAPI 地址 | `http://localhost:3285` |
-| `WEIXIN_CODEX_AGENTAPI_URL` | Codex AgentAPI 地址 | `http://localhost:3284` |
-| `WEIXIN_OPENCODE_AGENTAPI_URL` | OpenCode AgentAPI 地址 | `http://localhost:3286` |
-| `WEIXIN_COPILOT_AGENTAPI_URL` | Copilot AgentAPI 地址 | `http://localhost:3287` |
-| `WEIXIN_AUGGIE_AGENTAPI_URL` | Auggie AgentAPI 地址 | `http://localhost:3288` |
-| `WEIXIN_CURSOR_AGENTAPI_URL` | Cursor AgentAPI 地址 | `http://localhost:3289` |
-| `WEIXIN_AGENTAPI_AUTOSTART` | 禁用 AgentAPI 自动启动 | — |
+| `WEIXIN_CLAUDE_ACP_BIN` | Claude ACP 可执行文件路径 | `claude-agent-acp` |
+| `WEIXIN_CODEX_ACP_BIN` | Codex ACP 可执行文件路径 | `codex-acp` |
+| `WEIXIN_OPENCODE_ACP_BIN` | OpenCode ACP 可执行文件路径 | `opencode` |
+| `WEIXIN_COPILOT_ACP_BIN` | Copilot ACP 可执行文件路径 | `copilot` |
+| `WEIXIN_AUGGIE_ACP_BIN` | Auggie ACP 可执行文件路径 | `auggie` |
+| `WEIXIN_CURSOR_ACP_BIN` | Cursor ACP 可执行文件路径 | `cursor-agent` |
+| `WEIXIN_{BACKEND}_ACP_CWD` | 指定后端的工作目录 | 当前工作目录 |
+| `WEIXIN_{BACKEND}_ACP_PERMISSION_MODE` | 权限模式（`auto` 自动允许 / `cancel` 全部拒绝） | `auto` |
 | `OPENCLAW_LOG_LEVEL` | 日志级别 | `INFO` |
 
 ### OpenClaw 配置
@@ -166,9 +165,9 @@ npm run build
 
 - [OpenClaw](https://github.com/openclaw/openclaw) — 插件框架和 Gateway 运行时
 - [@tencent-weixin/openclaw-weixin](https://www.npmjs.com/package/@tencent-weixin/openclaw-weixin) — 微信通道能力（消息收发、媒体加解密、登录认证）
-- [AgentAPI](https://github.com/coder/agentapi) — Lightweight 模式的 HTTP 代理（Go）
 - [Agent Client Protocol (ACP)](https://github.com/AcpProtocol/acp) — Agent 通信协议
-- [BytePioneer-AI/weixin-agent-gateway](https://github.com/BytePioneer-AI/weixin-agent-gateway) — 多后端路由和 AgentAPI 集成的参考实现
+- [@agentclientprotocol/sdk](https://www.npmjs.com/package/@agentclientprotocol/sdk) — ACP 协议官方 SDK
+- [BytePioneer-AI/weixin-agent-gateway](https://github.com/BytePioneer-AI/weixin-agent-gateway) — 多后端路由和 ACP 集成的参考实现
 
 ## License
 

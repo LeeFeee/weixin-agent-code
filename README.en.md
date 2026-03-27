@@ -15,19 +15,19 @@ This plugin runs as an OpenClaw channel plugin, leveraging the WeChat channel ca
 Two backend modes are supported:
 
 - **openclaw mode**: Uses OpenClaw's full Agent routing pipeline with complete session management, tool calls, and all built-in capabilities.
-- **lightweight mode**: Connects directly to CLI Agents via AgentAPI (a Go binary) HTTP proxy + ACP protocol. Lightweight and fast, ideal for single-agent conversations.
+- **lightweight mode**: Connects directly to CLI Agents via ACP (Agent Communication Protocol) over subprocess stdio. Lightweight and stable, ideal for single-agent conversations.
 
 ## Supported Backends
 
-| Backend | Mode | Description | AgentAPI Port |
-|---------|------|-------------|---------------|
+| Backend | Mode | Description | ACP Command |
+|---------|------|-------------|-------------|
 | OpenClaw | openclaw | Built-in OpenClaw Agent, full pipeline | — |
-| Claude Code | lightweight | Anthropic Claude Code CLI | 3285 |
-| Codex | lightweight | OpenAI Codex CLI | 3284 |
-| OpenCode | lightweight | OpenCode CLI | 3286 |
-| GitHub Copilot | lightweight | GitHub Copilot CLI | 3287 |
-| Auggie | lightweight | Auggie CLI | 3288 |
-| Cursor | lightweight | Cursor Agent CLI | 3289 |
+| Claude Code | lightweight | Anthropic Claude Code CLI | `claude-agent-acp` |
+| Codex | lightweight | OpenAI Codex CLI | `codex-acp` |
+| OpenCode | lightweight | OpenCode CLI | `opencode acp` |
+| GitHub Copilot | lightweight | GitHub Copilot CLI | `copilot --acp --stdio` |
+| Auggie | lightweight | Auggie CLI | `auggie --acp` |
+| Cursor | lightweight | Cursor Agent CLI | `cursor-agent acp` |
 
 ## Prerequisites
 
@@ -36,7 +36,6 @@ Two backend modes are supported:
 
 The installer handles automatically:
 - [@tencent-weixin/openclaw-weixin](https://www.npmjs.com/package/@tencent-weixin/openclaw-weixin) >= 2.0.0 (peerDependency)
-- [AgentAPI](https://github.com/coder/agentapi) (Go binary for lightweight mode, auto-downloaded on first use)
 
 ## Installation
 
@@ -51,8 +50,7 @@ The installer automatically performs the following steps:
 3. Disables the official openclaw-weixin plugin (avoids channel conflict)
 4. Enables this plugin
 5. Guides you through WeChat QR code login
-6. Downloads the AgentAPI binary (needed for lightweight mode)
-7. Restarts the Gateway
+6. Restarts the Gateway
 
 Once installed, open WeChat and start chatting.
 
@@ -90,15 +88,15 @@ Backend selection is persisted per-user and automatically restored in subsequent
 
 ### Using Lightweight Backends
 
-Lightweight backends (claude/codex/etc.) require the corresponding CLI tool installed locally:
+Lightweight backends (claude/codex/etc.) require the corresponding CLI tool installed locally with ACP support:
 
 ```bash
 # For example, to use Claude Code
-npm install -g @anthropic-ai/claude-code
-claude   # Login first
+npm install -g @zed-industries/claude-agent-acp
+claude-agent-acp   # Complete login and trust configuration first
 ```
 
-AgentAPI auto-launches on the first request to each backend, listening on `localhost:328x` by default.
+Each backend's ACP CLI tool must be available in the system PATH. The plugin spawns a subprocess automatically on first use.
 
 ## Configuration
 
@@ -106,13 +104,14 @@ AgentAPI auto-launches on the first request to each backend, listening on `local
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `WEIXIN_CLAUDE_AGENTAPI_URL` | Claude AgentAPI URL | `http://localhost:3285` |
-| `WEIXIN_CODEX_AGENTAPI_URL` | Codex AgentAPI URL | `http://localhost:3284` |
-| `WEIXIN_OPENCODE_AGENTAPI_URL` | OpenCode AgentAPI URL | `http://localhost:3286` |
-| `WEIXIN_COPILOT_AGENTAPI_URL` | Copilot AgentAPI URL | `http://localhost:3287` |
-| `WEIXIN_AUGGIE_AGENTAPI_URL` | Auggie AgentAPI URL | `http://localhost:3288` |
-| `WEIXIN_CURSOR_AGENTAPI_URL` | Cursor AgentAPI URL | `http://localhost:3289` |
-| `WEIXIN_AGENTAPI_AUTOSTART` | Disable AgentAPI auto-start | — |
+| `WEIXIN_CLAUDE_ACP_BIN` | Claude ACP binary path | `claude-agent-acp` |
+| `WEIXIN_CODEX_ACP_BIN` | Codex ACP binary path | `codex-acp` |
+| `WEIXIN_OPENCODE_ACP_BIN` | OpenCode ACP binary path | `opencode` |
+| `WEIXIN_COPILOT_ACP_BIN` | Copilot ACP binary path | `copilot` |
+| `WEIXIN_AUGGIE_ACP_BIN` | Auggie ACP binary path | `auggie` |
+| `WEIXIN_CURSOR_ACP_BIN` | Cursor ACP binary path | `cursor-agent` |
+| `WEIXIN_{BACKEND}_ACP_CWD` | Working directory for the backend | Current working directory |
+| `WEIXIN_{BACKEND}_ACP_PERMISSION_MODE` | Permission mode (`auto` to allow all / `cancel` to deny all) | `auto` |
 | `OPENCLAW_LOG_LEVEL` | Log level | `INFO` |
 
 ### OpenClaw Configuration
@@ -166,9 +165,9 @@ This project's architecture and design draw inspiration from the following open-
 
 - [OpenClaw](https://github.com/openclaw/openclaw) — Plugin framework and Gateway runtime
 - [@tencent-weixin/openclaw-weixin](https://www.npmjs.com/package/@tencent-weixin/openclaw-weixin) — WeChat channel capabilities (message send/receive, media encryption, login auth)
-- [AgentAPI](https://github.com/coder/agentapi) — HTTP proxy for lightweight mode (Go)
 - [Agent Client Protocol (ACP)](https://github.com/AcpProtocol/acp) — Agent communication protocol
-- [BytePioneer-AI/weixin-agent-gateway](https://github.com/BytePioneer-AI/weixin-agent-gateway) — Reference implementation for multi-backend routing and AgentAPI integration
+- [@agentclientprotocol/sdk](https://www.npmjs.com/package/@agentclientprotocol/sdk) — Official ACP protocol SDK
+- [BytePioneer-AI/weixin-agent-gateway](https://github.com/BytePioneer-AI/weixin-agent-gateway) — Reference implementation for multi-backend routing and ACP integration
 
 ## License
 
