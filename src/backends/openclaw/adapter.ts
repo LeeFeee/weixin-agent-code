@@ -6,7 +6,8 @@ import { logger } from "../../util/logger.js";
 
 type OpenClawBackendDispatchContext = {
   config: import("openclaw/plugin-sdk/core").OpenClawConfig;
-  channelRuntime: PluginRuntime["channel"];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  channelRuntime: any;
   agentId?: string | null;
   finalized: unknown;
   dispatcher: unknown;
@@ -17,23 +18,23 @@ function castOpenClawDispatchContext(ctx: WeixinBackendDispatchContext): OpenCla
   return ctx.backendContext as OpenClawBackendDispatchContext;
 }
 
-function castDispatcher(
-  dispatcher: unknown,
-): Parameters<PluginRuntime["channel"]["reply"]["withReplyDispatcher"]>[0]["dispatcher"] {
-  return dispatcher as Parameters<PluginRuntime["channel"]["reply"]["withReplyDispatcher"]>[0]["dispatcher"];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function castDispatcher(dispatcher: unknown): any {
+  return dispatcher;
 }
 
 function castDispatchArgs(ctx: OpenClawBackendDispatchContext): {
-  ctx: Parameters<PluginRuntime["channel"]["reply"]["dispatchReplyFromConfig"]>[0]["ctx"];
-  dispatcher: Parameters<PluginRuntime["channel"]["reply"]["dispatchReplyFromConfig"]>[0]["dispatcher"];
-  replyOptions: Parameters<PluginRuntime["channel"]["reply"]["dispatchReplyFromConfig"]>[0]["replyOptions"];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ctx: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  dispatcher: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  replyOptions: any;
 } {
   return {
-    ctx: ctx.finalized as Parameters<PluginRuntime["channel"]["reply"]["dispatchReplyFromConfig"]>[0]["ctx"],
-    dispatcher:
-      ctx.dispatcher as Parameters<PluginRuntime["channel"]["reply"]["dispatchReplyFromConfig"]>[0]["dispatcher"],
-    replyOptions:
-      ctx.replyOptions as Parameters<PluginRuntime["channel"]["reply"]["dispatchReplyFromConfig"]>[0]["replyOptions"],
+    ctx: ctx.finalized,
+    dispatcher: ctx.dispatcher,
+    replyOptions: ctx.replyOptions,
   };
 }
 

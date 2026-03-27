@@ -23,3 +23,15 @@ declare module "fluent-ffmpeg" {
   function ffmpeg(input: string): FfmpegCommand;
   export default ffmpeg;
 }
+
+declare module "silk-wasm" {
+  interface SilkDecResult {
+    data: Uint8Array;
+    duration: number;
+  }
+  interface SilkEncResult {
+    data: ArrayBuffer;
+  }
+  export function encode(buf: ArrayBuffer, sampleRate: number): Promise<SilkEncResult>;
+  export function decode(buf: ArrayBuffer, sampleRate?: number): Promise<SilkDecResult>;
+}

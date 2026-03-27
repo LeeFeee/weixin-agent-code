@@ -59,7 +59,8 @@ export async function silkToWav(silkBuf: Buffer): Promise<Buffer | null> {
     const { decode } = await import("silk-wasm");
 
     logger.debug(`silkToWav: decoding ${silkBuf.length} bytes of SILK`);
-    const result = await decode(silkBuf, SILK_SAMPLE_RATE);
+    const ab = silkBuf.buffer.slice(silkBuf.byteOffset, silkBuf.byteOffset + silkBuf.byteLength) as ArrayBuffer;
+    const result = await decode(ab, SILK_SAMPLE_RATE);
     logger.debug(
       `silkToWav: decoded duration=${result.duration}ms pcmBytes=${result.data.byteLength}`,
     );

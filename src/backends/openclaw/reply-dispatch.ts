@@ -2,19 +2,26 @@ import { createTypingCallbacks } from "openclaw/plugin-sdk";
 import type { OpenClawConfig, PluginRuntime } from "openclaw/plugin-sdk";
 
 export function createOpenClawTypingCallbacks(
-  params: Parameters<typeof createTypingCallbacks>[0],
-): ReturnType<typeof createTypingCallbacks> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  params: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): any {
   return createTypingCallbacks(params);
 }
 
 export function createOpenClawReplyDispatcher(params: {
-  channelRuntime: PluginRuntime["channel"];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  channelRuntime: any;
   config: OpenClawConfig;
   agentId?: string | null;
-  typingCallbacks: Parameters<PluginRuntime["channel"]["reply"]["createReplyDispatcherWithTyping"]>[0]["typingCallbacks"];
-  deliver: Parameters<PluginRuntime["channel"]["reply"]["createReplyDispatcherWithTyping"]>[0]["deliver"];
-  onError: Parameters<PluginRuntime["channel"]["reply"]["createReplyDispatcherWithTyping"]>[0]["onError"];
-}): ReturnType<PluginRuntime["channel"]["reply"]["createReplyDispatcherWithTyping"]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  typingCallbacks: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  deliver: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onError: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+}): any {
   const humanDelay = params.channelRuntime.reply.resolveHumanDelayConfig(params.config, params.agentId);
   return params.channelRuntime.reply.createReplyDispatcherWithTyping({
     humanDelay,

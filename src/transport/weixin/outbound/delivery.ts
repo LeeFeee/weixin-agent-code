@@ -139,7 +139,7 @@ export function createWeixinReplyErrorHandler(params: {
       lowerErrMsg.includes("post /message") ||
       lowerErrMsg.includes("post /upload")
     ) {
-      const backendLabel = isKnownBackend ? WEIXIN_BACKEND_LABELS[info.kind] : "Agent";
+      const backendLabel = isKnownBackend ? (WEIXIN_BACKEND_LABELS as Record<string, string>)[info.kind] : "Agent";
       notice = `⚠️ ${backendLabel} 后端连接失败，请检查 agentapi 和对应命令是否可用，或 AgentAPI 地址配置是否正确。`;
     } else if (errMsg.includes("remote media download failed") || errMsg.includes("fetch")) {
       notice = "⚠️ 媒体文件下载失败，请检查链接是否可访问。";

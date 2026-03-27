@@ -5,12 +5,12 @@ import type { WeixinMsgContext } from "../../messaging/inbound.js";
 
 import type { OpenClawResolvedRoute } from "./routing.js";
 
-export type FinalizedOpenClawInboundContext = ReturnType<
-  PluginRuntime["channel"]["reply"]["finalizeInboundContext"]
->;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type FinalizedOpenClawInboundContext = any;
 
 export function finalizeOpenClawInboundContext(params: {
-  channelRuntime: PluginRuntime["channel"];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  channelRuntime: any;
   config: OpenClawConfig;
   route: OpenClawResolvedRoute;
   ctx: WeixinMsgContext;
@@ -22,14 +22,13 @@ export function finalizeOpenClawInboundContext(params: {
   const storePath = params.channelRuntime.session.resolveStorePath(params.config.session?.store, {
     agentId: params.route.agentId,
   });
-  const finalized = params.channelRuntime.reply.finalizeInboundContext(
-    params.ctx as Parameters<PluginRuntime["channel"]["reply"]["finalizeInboundContext"]>[0],
-  );
+  const finalized = params.channelRuntime.reply.finalizeInboundContext(params.ctx);
   return { finalized, storePath };
 }
 
 export async function recordOpenClawInboundSession(params: {
-  channelRuntime: PluginRuntime["channel"];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  channelRuntime: any;
   storePath: string;
   route: OpenClawResolvedRoute;
   finalized: FinalizedOpenClawInboundContext;
@@ -40,13 +39,13 @@ export async function recordOpenClawInboundSession(params: {
   await params.channelRuntime.session.recordInboundSession({
     storePath: params.storePath,
     sessionKey: params.route.sessionKey,
-    ctx: params.finalized as Parameters<PluginRuntime["channel"]["session"]["recordInboundSession"]>[0]["ctx"],
+    ctx: params.finalized,
     updateLastRoute: {
       sessionKey: params.route.mainSessionKey,
       channel: WEIXIN_CHANNEL_ID,
       to: params.to,
       accountId: params.accountId,
     },
-    onRecordError: (err) => params.errLog(`recordInboundSession: ${String(err)}`),
+    onRecordError: (err: unknown) => params.errLog(`recordInboundSession: ${String(err)}`),
   });
 }

@@ -13,6 +13,13 @@ const DEFAULT_USER_BIN_DIR = path.join(
 
 export const BACKEND_PORT_MAP: Record<string, number> = DEFAULT_BACKEND_PORTS;
 
+export const DEFAULT_CODEX_AGENTAPI_URL = `http://localhost:${DEFAULT_BACKEND_PORTS.codex}`;
+export const DEFAULT_CLAUDE_AGENTAPI_URL = `http://localhost:${DEFAULT_BACKEND_PORTS.claude}`;
+export const DEFAULT_OPENCODE_AGENTAPI_URL = `http://localhost:${DEFAULT_BACKEND_PORTS.opencode}`;
+export const DEFAULT_COPILOT_AGENTAPI_URL = `http://localhost:${DEFAULT_BACKEND_PORTS.copilot}`;
+export const DEFAULT_AUGGIE_AGENTAPI_URL = `http://localhost:${DEFAULT_BACKEND_PORTS.auggie}`;
+export const DEFAULT_CURSOR_AGENTAPI_URL = `http://localhost:${DEFAULT_BACKEND_PORTS.cursor}`;
+
 type BackendCommand = {
   codex: string;
   claude: string;

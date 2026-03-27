@@ -2,10 +2,12 @@ import type { OpenClawConfig, PluginRuntime } from "openclaw/plugin-sdk";
 
 import { WEIXIN_CHANNEL_ID } from "../../constants.js";
 
-export type OpenClawResolvedRoute = ReturnType<PluginRuntime["channel"]["routing"]["resolveAgentRoute"]>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type OpenClawResolvedRoute = any;
 
 export function resolveOpenClawAgentRoute(params: {
-  channelRuntime: PluginRuntime["channel"];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  channelRuntime: any;
   config: OpenClawConfig;
   accountId: string;
   peerId: string;
