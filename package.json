@@ -1,6 +1,6 @@
 {
   "name": "@leefeee/weixin-agent-code",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "一个面向微信入口的多后端 AI 网关，支持 Claude Code、Codex、OpenCode、Copilot、Auggie、Cursor 等后端",
   "type": "module",
   "main": "dist/index.js",

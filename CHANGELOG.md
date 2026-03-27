@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.1] - 2026-03-28
+
+### Fixed
+- Cleaned stale AgentAPI compiled files from dist/ directory
+- Improved subprocess lifecycle: all ACP instances now dispose on process exit/SIGTERM
+- Added SIGKILL escalation (5s timeout) when SIGTERM fails to terminate subprocess
+- Clear conversationTasks in resetState() to avoid stale promise chains
+- Added security documentation for `shell:true` on Windows
+
+### Changed
+- Removed AgentAPI residual code from CLI installer (cli.mjs)
+
 ## [1.1.0] - 2026-03-28
 
 ### Changed
