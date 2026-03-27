@@ -221,13 +221,17 @@ class AcpResponseCollector {
 }
 
 export class AcpSubprocessLightweightClient {
+  private static instances: AcpSubprocessLightweightClient[] = [];
+
   private connectionState: AcpConnectionState | undefined;
   private startupTask: Promise<AcpConnectionState> | undefined;
   private readonly sessions = new Map<string, SessionId>();
   private readonly collectors = new Map<SessionId, AcpResponseCollector>();
   private readonly conversationTasks = new Map<string, Promise<unknown>>();
 
-  constructor(private readonly options: AcpSubprocessClientOptions) {}
+  constructor(private readonly options: AcpSubprocessClientOptions) {
+    AcpSubprocessLightweightClient.instances.push(this);
+  }
 
   private resolveCommand(): string {
     const raw = readFirstEnv(this.options.commandEnvVarNames) || this.options.defaultCommand;
@@ -317,6 +321,7 @@ export class AcpSubprocessLightweightClient {
     this.connectionState = undefined;
     this.sessions.clear();
     this.collectors.clear();
+    this.conversationTasks.clear();
   }
 
   private attachConnectionLifecycle(state: AcpConnectionState): void {
@@ -349,6 +354,9 @@ export class AcpSubprocessLightweightClient {
         logger.info(
           `${this.options.backendId}-acp: initializing command=${formatCommandForDisplay(command, args)} cwd=${cwd}`,
         );
+        // Security note: shell:true is required on Windows for .cmd/.bat execution.
+        // The command and args are derived from {BACKEND}_ACP_BIN / {BACKEND}_ACP_ARGS env vars
+        // which must be set by a trusted operator — never from untrusted input.
         const proc = spawn(command, args, {
           cwd,
           env: process.env,
@@ -488,10 +496,29 @@ export class AcpSubprocessLightweightClient {
   dispose(): void {
     const state = this.connectionState;
     this.resetState();
+    if (!state) return;
+    const pid = state.process.pid;
     try {
-      state?.process.kill();
+      state.process.kill(); // SIGTERM
     } catch {
       // Best effort cleanup only.
     }
+    // Escalate to SIGKILL if process doesn't exit within 5s
+    if (pid) {
+      setTimeout(() => {
+        try { process.kill(pid!, "SIGKILL"); } catch {}
+      }, 5_000);
+    }
+  }
+
+  static disposeAll(): void {
+    for (const instance of AcpSubprocessLightweightClient.instances) {
+      instance.dispose();
+    }
+    AcpSubprocessLightweightClient.instances.length = 0;
   }
 }
+
+// Ensure all ACP subprocesses are cleaned up on Node.js exit
+process.on("exit", () => AcpSubprocessLightweightClient.disposeAll());
+process.on("SIGTERM", () => AcpSubprocessLightweightClient.disposeAll());
