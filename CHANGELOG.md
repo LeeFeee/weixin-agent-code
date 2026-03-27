@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.1.0] - 2026-03-28
+
+### Changed
+- **Breaking**: Replace AgentAPI (HTTP-based Go binary proxy) with ACP (Agent Communication Protocol) direct subprocess communication via `@agentclientprotocol/sdk`
+- Lightweight backends now spawn CLI agents as child processes over stdio/NDJSON instead of connecting through AgentAPI HTTP endpoints
+
+### Added
+- `AcpSubprocessLightweightClient` — unified ACP subprocess client with session management, conversation queuing, permission auto-approval, and image output handling
+- Per-backend ACP client classes with configurable command, args, and environment variables
+
+### Removed
+- `agentapi-client.ts` and `agentapi-launcher.ts` — AgentAPI HTTP client and launcher
+- All `WEIXIN_*_AGENTAPI_URL`, `AGENTAPI_AUTOSTART`, `AGENTAPI_BIN` environment variables
+
+### Migration
+- Environment variables renamed from `WEIXIN_{BACKEND}_AGENTAPI_URL` to `WEIXIN_{BACKEND}_ACP_BIN` (binary path instead of HTTP URL)
+- New optional env vars: `WEIXIN_{BACKEND}_ACP_CWD` (working directory), `WEIXIN_{BACKEND}_ACP_PERMISSION_MODE` (`auto`/`cancel`)
+
 ## [1.0.0] - 2026-03-27
 
 ### Added
