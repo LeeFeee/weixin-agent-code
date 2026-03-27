@@ -133,14 +133,14 @@ export function createWeixinReplyErrorHandler(params: {
     const isKnownBackend = isWeixinBackendId(info.kind);
     if (
       (isKnownBackend && info.kind !== "openclaw") ||
-      lowerErrMsg.includes("agentapi") ||
-      lowerErrMsg.includes("get /status") ||
-      lowerErrMsg.includes("get /messages") ||
-      lowerErrMsg.includes("post /message") ||
-      lowerErrMsg.includes("post /upload")
+      lowerErrMsg.includes("acp") ||
+      lowerErrMsg.includes("spawn") ||
+      lowerErrMsg.includes("enoent") ||
+      lowerErrMsg.includes("eacces") ||
+      lowerErrMsg.includes("session/prompt")
     ) {
       const backendLabel = isKnownBackend ? (WEIXIN_BACKEND_LABELS as Record<string, string>)[info.kind] : "Agent";
-      notice = `⚠️ ${backendLabel} 后端连接失败，请检查 agentapi 和对应命令是否可用，或 AgentAPI 地址配置是否正确。`;
+      notice = `⚠️ ${backendLabel} 后端连接失败，请检查 ACP 命令是否可用，或环境变量配置是否正确。`;
     } else if (errMsg.includes("remote media download failed") || errMsg.includes("fetch")) {
       notice = "⚠️ 媒体文件下载失败，请检查链接是否可访问。";
     } else if (

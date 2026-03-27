@@ -21,6 +21,9 @@
   "engines": {
     "openclaw": ">=2026.3.23"
   },
+  "dependencies": {
+    "@agentclientprotocol/sdk": "^0.16.1"
+  },
   "peerDependencies": {
     "@tencent-weixin/openclaw-weixin": ">=2.0.0"
   },
