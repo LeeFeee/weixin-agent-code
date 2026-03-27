@@ -379,7 +379,7 @@ export class AcpSubprocessLightweightClient {
           protocolVersion: PROTOCOL_VERSION,
           clientInfo: {
             name: "weixin-agent-code",
-            version: "1.0.0",
+            version: "1.1.0",
           },
           clientCapabilities: {},
         });
