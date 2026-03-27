@@ -1,25 +1,13 @@
 #!/usr/bin/env node
 
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
-import { chmodSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 
 const PACKAGE_NAME = "@leefeee/weixin-agent-code";
-const INSTALLER_USER_AGENT = "weixin-agent-code-installer";
 const PLUGIN_SPEC = process.env.WEIXIN_GATEWAY_PLUGIN_SPEC?.trim() || PACKAGE_NAME;
 const CHANNEL_ID = process.env.WEIXIN_GATEWAY_CHANNEL_ID?.trim() || "weixin-agent-code";
 const PLUGIN_ENTRY_ID = process.env.WEIXIN_GATEWAY_PLUGIN_ID?.trim() || "weixin-agent-code";
 const OFFICIAL_PLUGIN_ENTRY_ID = "openclaw-weixin";
 const ENABLE_OFFICIAL_PLUGIN_CMD = "openclaw config set plugins.entries.openclaw-weixin.enabled true";
-const AGENTAPI_VERSION = process.env.AGENTAPI_VERSION?.trim() || "latest";
-const DEFAULT_CODEX_AGENTAPI_URL = "http://localhost:3284";
-const DEFAULT_CLAUDE_AGENTAPI_URL = "http://localhost:3285";
-const DEFAULT_OPENCODE_AGENTAPI_URL = "http://localhost:3286";
-const DEFAULT_COPILOT_AGENTAPI_URL = "http://localhost:3287";
-const DEFAULT_AUGGIE_AGENTAPI_URL = "http://localhost:3288";
-const DEFAULT_CURSOR_AGENTAPI_URL = "http://localhost:3289";
 
 function log(msg) {
   console.log(`\x1b[36m[weixin-agent-code]\x1b[0m ${msg}`);
@@ -33,10 +21,6 @@ function error(msg) {
   console.error(`\x1b[31m[weixin-agent-code]\x1b[0m ${msg}`);
 }
 
-function isWindows() {
-  return process.platform === "win32";
-}
-
 function run(cmd, { silent = true } = {}) {
   const stdio = silent ? ["pipe", "pipe", "pipe"] : "inherit";
   const result = spawnSync(cmd, { shell: true, stdio });
@@ -48,177 +32,10 @@ function run(cmd, { silent = true } = {}) {
   return silent ? (result.stdout || "").toString().trim() : "";
 }
 
-function commandExists(bin) {
-  const checker = isWindows() ? `where ${bin}` : `command -v ${bin}`;
-  try {
-    return Boolean(run(checker));
-  } catch {
-    return false;
-  }
-}
-
-function resolveAgentApiArch() {
-  switch (process.arch) {
-    case "x64":
-      return "amd64";
-    case "arm64":
-      return "arm64";
-    default:
-      throw new Error(`Unsupported architecture for agentapi: ${process.arch}`);
-  }
-}
-
-function resolveAgentApiOs() {
-  switch (process.platform) {
-    case "linux":
-      return "linux";
-    case "darwin":
-      return "darwin";
-    case "win32":
-      return "windows";
-    default:
-      throw new Error(`Unsupported platform for agentapi: ${process.platform}`);
-  }
-}
-
-function resolveAgentApiBinaryName() {
-  const osPart = resolveAgentApiOs();
-  const archPart = resolveAgentApiArch();
-  return isWindows() ? `agentapi-${osPart}-${archPart}.exe` : `agentapi-${osPart}-${archPart}`;
-}
-
-function resolveAgentApiDownloadUrl(fileName) {
-  if (AGENTAPI_VERSION === "latest") {
-    return `https://github.com/coder/agentapi/releases/latest/download/${fileName}`;
-  }
-  return `https://github.com/coder/agentapi/releases/download/${AGENTAPI_VERSION}/${fileName}`;
-}
-
-function resolveUserBinDir() {
-  return path.join(os.homedir(), ".local", "bin");
-}
-
-async function downloadToFile(url, filePath) {
-  const res = await fetch(url, {
-    headers: { "User-Agent": INSTALLER_USER_AGENT },
-  });
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Download failed: HTTP ${res.status} ${res.statusText}${body ? ` - ${body}` : ""}`);
-  }
-  const arr = await res.arrayBuffer();
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, Buffer.from(arr));
-}
-
-function collectErrorTexts(err) {
-  const texts = [];
-  let current = err;
-  while (current) {
-    if (current instanceof Error) {
-      if (current.message) texts.push(current.message);
-      current = current.cause;
-      continue;
-    }
-    if (typeof current === "object" && current && "message" in current) {
-      const message = current.message;
-      if (typeof message === "string" && message) {
-        texts.push(message);
-      }
-      current = "cause" in current ? current.cause : undefined;
-      continue;
-    }
-    break;
-  }
-  return texts;
-}
-
-function isAgentApiDownloadNetworkError(err) {
-  const joined = collectErrorTexts(err).join("\n").toLowerCase();
-  return [
-    "fetch failed",
-    "connect timeout",
-    "timed out",
-    "econnreset",
-    "enotfound",
-    "eai_again",
-    "und_err_connect_timeout",
-    "github.com:443",
-  ].some((token) => joined.includes(token));
-}
-
-function printManualAgentApiInstallHelp({ downloadUrl, targetPath }) {
-  const binDir = resolveUserBinDir();
-  console.log();
-  warn("自动下载 AgentAPI 失败，当前机器可能无法直接访问 GitHub。");
-  console.log("你可以手动下载安装 AgentAPI：");
-  console.log(`  下载地址: ${downloadUrl}`);
-  console.log(`  建议安装路径: ${targetPath}`);
-  console.log();
-  if (isWindows()) {
-    console.log("Windows 示例：");
-    console.log(`  1. 下载后重命名为 agentapi.exe`);
-    console.log(`  2. 放到 ${binDir}`);
-    console.log(`  3. 确保 ${binDir} 在 PATH 中`);
-  } else {
-    console.log("Linux/macOS 示例：");
-    console.log(`  mkdir -p "${binDir}"`);
-    console.log(`  cp /path/to/agentapi "${targetPath}"`);
-    console.log(`  chmod +x "${targetPath}"`);
-    console.log(`  export PATH="${binDir}:$PATH"`);
-  }
-  console.log();
-  console.log("安装完成后，可重新执行：");
-  console.log("  openclaw gateway restart");
-  console.log("或在启动前显式指定：");
-  if (isWindows()) {
-    console.log(`  $env:WEIXIN_AGENTAPI_BIN="${targetPath}"`);
-  } else {
-    console.log(`  export WEIXIN_AGENTAPI_BIN="${targetPath}"`);
-  }
-  console.log();
-}
-
-async function ensureAgentApiInstalled() {
-  if (commandExists("agentapi")) {
-    log("已检测到 agentapi");
-    return { installed: false, targetPath: "agentapi" };
-  }
-
-  log("未检测到 agentapi，开始下载最新二进制...");
-  const fileName = resolveAgentApiBinaryName();
-  const downloadUrl = resolveAgentApiDownloadUrl(fileName);
-  const binDir = resolveUserBinDir();
-  const targetPath = path.join(binDir, isWindows() ? "agentapi.exe" : "agentapi");
-
-  try {
-    await downloadToFile(downloadUrl, targetPath);
-  } catch (err) {
-    if (isAgentApiDownloadNetworkError(err)) {
-      printManualAgentApiInstallHelp({ downloadUrl, targetPath });
-      return { installed: false, targetPath, manualInstallRequired: true };
-    }
-    throw err;
-  }
-  if (!isWindows()) {
-    chmodSync(targetPath, 0o755);
-  }
-
-  const pathParts = (process.env.PATH || "").split(path.delimiter);
-  if (!pathParts.includes(binDir)) {
-    process.env.PATH = `${binDir}${path.delimiter}${process.env.PATH || ""}`;
-  }
-
-  if (!commandExists("agentapi")) {
-    warn(`agentapi 已下载到 ${targetPath}，但当前 PATH 中可能还没有 ${binDir}`);
-  } else {
-    log(`agentapi 已安装到 ${targetPath}`);
-  }
-  return { installed: true, targetPath };
-}
-
 function ensureOpenClawInstalled() {
-  if (!commandExists("openclaw")) {
+  try {
+    run("openclaw --version");
+  } catch {
     error("未找到 openclaw，请先安装 OpenClaw。");
     console.log("  npm install -g openclaw");
     console.log("  详见 https://docs.openclaw.ai/install");
@@ -308,19 +125,10 @@ function restartGateway() {
   }
 }
 
-function printNextSteps(agentapiInfo) {
+function printNextSteps() {
   console.log();
   log("安装完成。下一步建议：");
   console.log();
-  if (agentapiInfo?.installed) {
-    console.log(`AgentAPI 已下载到: ${agentapiInfo.targetPath}`);
-    console.log();
-  }
-  if (agentapiInfo?.manualInstallRequired) {
-    console.log("AgentAPI 尚未自动安装完成。");
-    console.log("完成手动安装后，再执行一次 `openclaw gateway restart` 即可。");
-    console.log();
-  }
   console.log("1. 直接在微信里切换后端");
   console.log("   /codex");
   console.log("   /claude");
@@ -330,25 +138,18 @@ function printNextSteps(agentapiInfo) {
   console.log("   /cursor");
   console.log("   /openclaw");
   console.log();
-  console.log("   默认会连接本地 AgentAPI：Codex 3284，Claude 3285，Opencode 3286，Copilot 3287，Auggie 3288，Cursor 3289；没拉起时会自动尝试启动。");
-  console.log("   前提是本机 `agentapi` 和对应 CLI 命令可用且已登录。");
+  console.log("   本插件通过 ACP (Agent Communication Protocol) 直接连接各 CLI Agent。");
+  console.log("   前提是对应的 ACP CLI 工具已安装并完成登录/授权。");
   console.log();
-  console.log("2. 只有在你需要改远端地址或非默认端口时，才设置环境变量");
-  if (isWindows()) {
-    console.log(`   $env:WEIXIN_CODEX_AGENTAPI_URL=\"${DEFAULT_CODEX_AGENTAPI_URL}\"`);
-    console.log(`   $env:WEIXIN_CLAUDE_AGENTAPI_URL=\"${DEFAULT_CLAUDE_AGENTAPI_URL}\"`);
-    console.log(`   $env:WEIXIN_OPENCODE_AGENTAPI_URL=\"${DEFAULT_OPENCODE_AGENTAPI_URL}\"`);
-    console.log(`   $env:WEIXIN_COPILOT_AGENTAPI_URL=\"${DEFAULT_COPILOT_AGENTAPI_URL}\"`);
-    console.log(`   $env:WEIXIN_AUGGIE_AGENTAPI_URL=\"${DEFAULT_AUGGIE_AGENTAPI_URL}\"`);
-    console.log(`   $env:WEIXIN_CURSOR_AGENTAPI_URL=\"${DEFAULT_CURSOR_AGENTAPI_URL}\"`);
-  } else {
-    console.log(`   export WEIXIN_CODEX_AGENTAPI_URL=\"${DEFAULT_CODEX_AGENTAPI_URL}\"`);
-    console.log(`   export WEIXIN_CLAUDE_AGENTAPI_URL=\"${DEFAULT_CLAUDE_AGENTAPI_URL}\"`);
-    console.log(`   export WEIXIN_OPENCODE_AGENTAPI_URL=\"${DEFAULT_OPENCODE_AGENTAPI_URL}\"`);
-    console.log(`   export WEIXIN_COPILOT_AGENTAPI_URL=\"${DEFAULT_COPILOT_AGENTAPI_URL}\"`);
-    console.log(`   export WEIXIN_AUGGIE_AGENTAPI_URL=\"${DEFAULT_AUGGIE_AGENTAPI_URL}\"`);
-    console.log(`   export WEIXIN_CURSOR_AGENTAPI_URL=\"${DEFAULT_CURSOR_AGENTAPI_URL}\"`);
-  }
+  console.log("2. 如需自定义 ACP CLI 工具路径，可设置环境变量");
+  console.log("   export WEIXIN_CLAUDE_ACP_BIN=/path/to/claude-agent-acp");
+  console.log("   export WEIXIN_CODEX_ACP_BIN=/path/to/codex-acp");
+  console.log("   export WEIXIN_OPENCODE_ACP_BIN=/path/to/opencode");
+  console.log("   export WEIXIN_COPILOT_ACP_BIN=/path/to/copilot");
+  console.log("   export WEIXIN_AUGGIE_ACP_BIN=/path/to/auggie");
+  console.log("   export WEIXIN_CURSOR_ACP_BIN=/path/to/cursor-agent");
+  console.log("   export WEIXIN_{BACKEND}_ACP_CWD=/your/project/dir");
+  console.log("   export WEIXIN_{BACKEND}_ACP_PERMISSION_MODE=auto  # 或 cancel");
   console.log();
 }
 
@@ -358,9 +159,8 @@ async function install() {
   disableOfficialPlugin();
   enablePlugin();
   loginWeixin();
-  const agentapiInfo = await ensureAgentApiInstalled();
   restartGateway();
-  printNextSteps(agentapiInfo);
+  printNextSteps();
 }
 
 function help() {
@@ -368,7 +168,7 @@ function help() {
 用法: npx -y ${PACKAGE_NAME} <命令>
 
 命令:
-  install   安装插件、启用插件、扫码登录，并安装 AgentAPI
+  install   安装插件、启用插件、扫码登录
   help      显示帮助信息
 `);
 }
