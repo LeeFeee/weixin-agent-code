@@ -1,0 +1,9 @@
+{
+  "id": "weixin-agent-code",
+  "channels": ["weixin-agent-code"],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}

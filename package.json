@@ -1,0 +1,32 @@
+{
+  "name": "@leefeee/weixin-agent-code",
+  "version": "1.0.0",
+  "description": "一个面向微信入口的多后端 AI 网关，支持 Claude Code、Codex、OpenCode、Copilot、Auggie、Cursor 等后端",
+  "type": "module",
+  "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "openclaw", "wechat", "weixin", "claude", "codex", "agent", "acp"
+  ],
+  "license": "MIT",
+  "engines": {
+    "openclaw": ">=2026.3.23"
+  },
+  "peerDependencies": {
+    "@tencent-weixin/openclaw-weixin": ">=2.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0",
+    "zod": "^3.25.0"
+  }
+}
